@@ -6,10 +6,25 @@ var Merb = function() {};
 //pass in the root server url api call for just one movie.
 //https://cs3213.herokuapp.com/movies/
 var Model = Merb.Model = function(modelUrl) {
+    /* Model Properties */
     this.url = modelUrl;
     this.modelObj = {};
+
+    /* Model Methods */
     this.get = function(modelParams){
-        //do ajax call here to get the json data and set it to modelObj
+        //ajax default async true
+        $.ajax({
+            url: this.url+"/"+ modelParams.id,
+            type: 'get',
+            context: this,
+            error: function(jqxhr, textStatus, error){
+                console.log("error: " + error);
+            },
+            success: function(data, textStatus, jqxhr){
+                this.obj = data;
+                modelParams.success(data); //run callback method
+            }
+        });
     };
     // Save a model when:
     // Create - https://cs3213.herokuapp.com/movies.json
@@ -25,13 +40,40 @@ var Model = Merb.Model = function(modelUrl) {
         }
 
         if (this.obj.formData instanceof FormData){
-            //do ajax POST call
+            $.ajax({
+                type: 'post',
+                url: urlToSaveTo,
+                data: this.obj.formData,
+                contentType: false,
+                processData: false,
+                error: function(jqxhr, textStatus, error){
+                    console.log("error: " + error);
+                },
+                success: function(data, textStatus, jqxhr){
+                    this.obj = data;
+                    modelParams.success(data); //run callback method
+                }
+            });
         }
         else {
             //do ajax POST call with normal key-value pairs of the new data
+            $.ajax({
+                type: 'post',
+                url: urlToSaveTo,
+                async: false,
+                context: this,
+                data: this.obj,
+                error: function(jqxhr, textStatus, error){
+                    console.log("error: " + error);
+                },
+                success: function(data, textStatus, jqxhr){
+                    this.obj = data;
+                    modelParams.success(data); //run callback method
+                }
+            });
         }
+    }; //end of this.save = func...
 
-    };
     // Use when Updating existing movie details
     // About the same as the save function
     // except we need to define the particular movie id
@@ -39,6 +81,41 @@ var Model = Merb.Model = function(modelUrl) {
         var urlToSendUpdate = newModelParams.urlForUpdating;
 
     };
+    this.delete = function(modelToDeleteParams){
+        var urlToDeleteFrom = modelToDeleteParams.url;
+        var serverModelId = modelToDeleteParams.id;
+        var callbackFunc = modelToDeleteParams.success;
+
+        if (typeof urlToDeleteFrom != "undefined"){
+            urlToDeleteFrom = this.url;
+        }
+
+        if (typeof serverModelId != "undefined"){
+            urlToDeleteFrom = urlToDeleteFrom + "/" + serverModelId;
+        }
+        else {
+            urlToDeleteFrom = urlToDeleteFrom + "/" + this.modelObj.id;
+        }
+        if (typeof this.modelObj.id == "undefined"){
+            this.modelObj = {};
+        }
+        else {
+            $.ajax({
+                type: 'delete',
+                url: urlToDeleteFrom,
+                context: this,
+                data: this.modelObj,
+                error: function(jqxhr, textStatus, error){
+                    console.log("error: " + error);
+                },
+                success: function(data, textStatus, jqxhr){
+                    this.obj = data;
+                    modelParams.success(data); //run callback method
+                }
+            });
+        }
+    }//end of this.delete = func...
+
 } // end of var Model = Merb.Model ...
 
 var Collection = Merb.Collection = function (modelForCollection){
@@ -51,4 +128,13 @@ var Collection = Merb.Collection = function (modelForCollection){
 //View takes a HTML Template object to work
 var View = Merb.View = function(template){
     this.model = null;
+    this.template = template;
+    this.bindModel = function(model){
+        this.model = model;
+    };
+    this.render = function(){
+        var template = _.template(this.template.html(), {model: this.model});
+        return template;
+    }
 }
+
