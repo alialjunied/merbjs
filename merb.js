@@ -21,7 +21,7 @@ var Model = Merb.Model = function(modelUrl) {
                 console.log("error: " + error);
             },
             success: function(data, textStatus, jqxhr){
-                this.obj = data;
+                this.modelObj = data;
                 modelParams.success(data); //run callback method
             }
         });
@@ -50,7 +50,7 @@ var Model = Merb.Model = function(modelUrl) {
                     console.log("error: " + error);
                 },
                 success: function(data, textStatus, jqxhr){
-                    this.obj = data;
+                    this.modelObj = data;
                     modelParams.success(data); //run callback method
                 }
             });
@@ -62,12 +62,12 @@ var Model = Merb.Model = function(modelUrl) {
                 url: urlToSaveTo,
                 async: false,
                 context: this,
-                data: this.obj,
+                data: this.modelObj,
                 error: function(jqxhr, textStatus, error){
                     console.log("error: " + error);
                 },
                 success: function(data, textStatus, jqxhr){
-                    this.obj = data;
+                    this.modelObj = data;
                     modelParams.success(data); //run callback method
                 }
             });
@@ -109,7 +109,7 @@ var Model = Merb.Model = function(modelUrl) {
                     console.log("error: " + error);
                 },
                 success: function(data, textStatus, jqxhr){
-                    this.obj = data;
+                    this.modelObj = data;
                     modelParams.success(data); //run callback method
                 }
             });
