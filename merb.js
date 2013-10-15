@@ -152,11 +152,8 @@ _.extend(Merb.View.prototype, {
             var eventName = match[1], selector = match[2];
             console.log(eventName + " " + selector + "\n");
             var method = events[key];
-            
-            //method = _.bind(method, this);
-            $(selector).on(eventName, function(){
-                this.sendReview();
-            });
+            this[method]();
+            $(selector).(eventName, this[method]);
         }
     },
     print: function(){
