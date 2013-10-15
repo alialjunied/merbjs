@@ -126,15 +126,82 @@ var Collection = Merb.Collection = function (modelForCollection){
 }
 
 //View takes a HTML Template object to work
-var View = Merb.View = function(template){
+var View = Merb.View = function(options){
     this.model = null;
-    this.template = template;
+    this.template = options["el"];
+    this.events = options["events"];
+    _.extend(this,options);
+
+    this.delegateEvents(this.events);
     this.bindModel = function(model){
         this.model = model;
-    };
+    },
     this.render = function(){
         var template = _.template(this.template.html(), {model: this.model});
         return template;
     }
-}
+
+};
+var delegateEventSplitter = /^(\S+)\s*(.*)$/;
+_.extend(Merb.View.prototype, {
+    initialize: function(){},
+    delegateEvents: function(events){
+        console.log(this);
+        for(var key in events){
+            var match = key.match(delegateEventSplitter);
+            var eventName = match[1], selector = match[2];
+            console.log(eventName + " " + selector + "\n");
+            var method = events[key];
+            
+            //method = _.bind(method, this);
+            $(selector).on(eventName, function(){
+                this.sendReview();
+            });
+        }
+    },
+    print: function(){
+        var events = _.result(this, 'events');
+        for(var key in events){
+            var method = events[key];
+            console.log(key + " : " + method + "\n");
+        }  
+    }
+});
+
+var extend = function(protoProps, staticProps) {
+    var parent = this;
+    var child;
+
+    // The constructor function for the new subclass is either defined by you
+    // (the "constructor" property in your `extend` definition), or defaulted
+    // by us to simply call the parent's constructor.
+    if (protoProps && _.has(protoProps, 'constructor')) {
+      child = protoProps.constructor;
+    } else {
+      child = function(){ return parent.apply(this, arguments); };
+    }
+
+    // Add static properties to the constructor function, if supplied.
+    _.extend(child, parent, staticProps);
+
+    // Set the prototype chain to inherit from `parent`, without calling
+    // `parent`'s constructor function.
+    var Surrogate = function(){ this.constructor = child; };
+    Surrogate.prototype = parent.prototype;
+    child.prototype = new Surrogate;
+
+    // Add prototype properties (instance properties) to the subclass,
+    // if supplied.
+    if (protoProps) _.extend(child.prototype, protoProps);
+
+    // Set a convenience property in case the parent's prototype is needed
+    // later.
+    child.__super__ = parent.prototype;
+
+    return child;
+  };
+
+  // Set up inheritance for the model, collection, router, view and history.
+  View.extend = extend;
+
 
